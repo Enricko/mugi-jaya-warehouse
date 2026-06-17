@@ -23,7 +23,7 @@
                 </div>
 
                 <div class="ml-auto flex items-center gap-3">
-                    <div class="hidden md:flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 w-64">
+                    <div class="hidden md:flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 w-64 focus-within:ring-2 focus-within:ring-amber-500 focus-within:bg-white transition">
                         <x-icon name="search" class="w-4 h-4 text-slate-400" />
                         <input type="text" placeholder="Cari material, proyek, driver…"
                                class="bg-transparent text-sm outline-none flex-1 placeholder:text-slate-400">

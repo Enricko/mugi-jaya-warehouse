@@ -30,6 +30,32 @@
 .leaflet-container { font: inherit; background: #e2e8f0; }
 .leaflet-top, .leaflet-bottom { z-index: 10; }
 
+/* ── Global interaction polish ────────────────────────────────── */
+@layer base {
+    /* Pointer + press feedback for all buttons (Tailwind v4 preflight drops these) */
+    button:not(:disabled), [role="button"]:not(:disabled), [type="submit"]:not(:disabled) {
+        cursor: pointer;
+    }
+    button:not(:disabled):active, [type="submit"]:not(:disabled):active {
+        transform: scale(0.98);
+    }
+    button, [type="submit"] { transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease; }
+    button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+    /* Brand-tinted text selection */
+    ::selection { background: rgba(245, 158, 11, 0.25); }
+
+    /* Data table rows ease their hover transition */
+    tbody tr { transition: background-color 0.12s ease; }
+}
+
+/* Subtle, modern scrollbars */
+* { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: #94a3b8; background-clip: content-box; }
+*::-webkit-scrollbar-track { background: transparent; }
+
 /* Honor reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
