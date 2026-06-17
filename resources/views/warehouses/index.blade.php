@@ -9,7 +9,7 @@
 @section('content')
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
     @foreach($warehouses as $w)
-        <a href="{{ route('warehouses.show', $w) }}" class="block bg-white rounded-xl border border-slate-200/70 shadow-sm p-5 hover:border-amber-300 transition">
+        <a href="{{ route('warehouses.show', $w) }}" class="block bg-white rounded-xl border border-slate-200/70 shadow-sm p-5 hover:border-amber-300 hover:shadow-md transition">
             <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-11 h-11 rounded-xl bg-slate-900 text-white grid place-items-center"><x-icon name="warehouse" class="w-6 h-6" /></div>

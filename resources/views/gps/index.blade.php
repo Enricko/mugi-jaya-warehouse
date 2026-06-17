@@ -52,7 +52,7 @@
     {{-- Map --}}
     <div class="lg:col-span-2">
         <x-card>
-            <div id="gpsMap" class="h-[34rem] rounded-lg overflow-hidden border border-slate-200 z-0"></div>
+            <div id="gpsMap" style="height:34rem;min-height:34rem" class="rounded-lg overflow-hidden border border-slate-200 z-0"></div>
         </x-card>
     </div>
 </div>
@@ -77,5 +77,9 @@
         bounds.push([m.lat, m.lng]);
     });
     if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+
+    // Ensure tiles render correctly once layout settles
+    setTimeout(() => map.invalidateSize(), 150);
+    window.addEventListener('resize', () => map.invalidateSize());
 </script>
 @endpush

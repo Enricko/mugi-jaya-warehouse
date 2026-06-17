@@ -7,7 +7,7 @@
 @section('content')
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
     @foreach($projects as $p)
-        <a href="{{ route('projects.show', $p) }}" class="block bg-white rounded-xl border border-slate-200/70 shadow-sm p-5 hover:border-amber-300 transition">
+        <a href="{{ route('projects.show', $p) }}" class="block bg-white rounded-xl border border-slate-200/70 shadow-sm p-5 hover:border-amber-300 hover:shadow-md transition">
             <div class="flex items-start justify-between">
                 <div class="w-10 h-10 rounded-xl bg-slate-900 text-white grid place-items-center"><x-icon name="project" class="w-5 h-5" /></div>
                 <x-status-pill :status="$p->status" />

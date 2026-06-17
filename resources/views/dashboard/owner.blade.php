@@ -89,7 +89,7 @@
                 <h3 class="font-semibold text-slate-800">Live GPS Tracking</h3>
                 <span class="text-xs text-slate-400">{{ $activeShipments->count() }} kendaraan aktif</span>
             </div>
-            <div id="miniMap" class="h-72 rounded-lg overflow-hidden border border-slate-200 z-0"></div>
+            <div id="miniMap" style="height:18rem;min-height:18rem" class="rounded-lg overflow-hidden border border-slate-200 z-0"></div>
         </x-card>
     </div>
 
@@ -137,9 +137,13 @@
 
     const map = L.map('miniMap').setView([-6.25, 106.95], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18 }).addTo(map);
+    const mini = [];
     activeShipments.forEach(s => {
         if (!s.lat || !s.lng) return;
         L.marker([s.lat, s.lng]).addTo(map).bindPopup(`<b>${s.plate}</b><br>${s.driver}<br>${s.project}`);
+        mini.push([s.lat, s.lng]);
     });
+    if (mini.length) map.fitBounds(mini, { padding: [30, 30], maxZoom: 12 });
+    setTimeout(() => map.invalidateSize(), 150);
 </script>
 @endpush

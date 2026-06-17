@@ -9,3 +9,29 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ── App-wide polish ──────────────────────────────────────────── */
+@layer base {
+    /* Accessible focus ring (amber) on keyboard navigation */
+    a:focus-visible,
+    button:focus-visible,
+    [tabindex]:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
+    /* Tabular figures keep numeric columns aligned (qty, money) */
+    table { font-variant-numeric: tabular-nums; }
+    /* Smooth, subtle scrolling */
+    html { scroll-behavior: smooth; }
+}
+
+/* Leaflet integration: inherit app font, sit below the sticky topbar */
+.leaflet-container { font: inherit; background: #e2e8f0; }
+.leaflet-top, .leaflet-bottom { z-index: 10; }
+
+/* Honor reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    html { scroll-behavior: auto; }
+}
