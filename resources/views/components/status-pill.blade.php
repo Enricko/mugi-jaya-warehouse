@@ -24,6 +24,6 @@
     [$label, $classes] = $map[$status] ?? [ucfirst(str_replace('_', ' ', $status)), 'bg-slate-100 text-slate-600'];
 @endphp
 
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide {{ $classes }}">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide ring-1 ring-inset ring-black/5 whitespace-nowrap {{ $classes }}">
     {{ $label }}
 </span>

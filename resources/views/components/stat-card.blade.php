@@ -25,7 +25,7 @@
     $accentBar = $accentBars[$accent] ?? $accentBars['slate'];
 @endphp
 
-<div {{ $attributes->merge(['class' => "bg-white rounded-xl border border-slate-200/70 border-l-4 {$accentBar} shadow-sm p-4 transition hover:shadow-md"]) }}>
+<div {{ $attributes->merge(['class' => "bg-white rounded-xl border border-slate-200/70 border-l-4 {$accentBar} shadow-sm p-4 transition duration-200 hover:shadow-md hover:-translate-y-0.5"]) }}>
     <p class="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">{{ $label }}</p>
     <p class="mt-2 text-2xl font-bold {{ $valueColor }}">{{ $value }}</p>
     @if($trend)

@@ -1,6 +1,6 @@
 @props(['title' => null, 'subtitle' => null])
 
-<div {{ $attributes->merge(['class' => 'bg-white rounded-xl border border-slate-200/70 shadow-sm']) }}>
+<div {{ $attributes->merge(['class' => 'bg-white rounded-xl border border-slate-200/70 shadow-sm transition-shadow duration-200 hover:shadow-md']) }}>
     @if($title || isset($actions))
         <div class="flex items-start justify-between gap-3 px-5 pt-4 pb-3">
             <div>
