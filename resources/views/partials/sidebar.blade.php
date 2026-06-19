@@ -5,6 +5,7 @@
     // label, icon, route name, roles allowed
     $menu = [
         ['Dashboard',      'dashboard', 'dashboard',            ['owner', 'kepala_gudang', 'mandor', 'driver', 'engineering']],
+        ['Notifikasi',     'bell',      'notifications.index',  ['owner', 'kepala_gudang', 'mandor', 'driver', 'engineering']],
         ['Gudang',         'warehouse', 'warehouses.index',     ['owner', 'kepala_gudang']],
         ['Inventaris',     'inventory', 'inventory.index',      ['owner', 'kepala_gudang']],
         ['Barang Masuk',   'inbound',   'inbound.index',        ['kepala_gudang', 'mandor']],

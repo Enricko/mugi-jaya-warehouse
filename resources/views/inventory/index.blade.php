@@ -27,6 +27,38 @@
         <x-stat-card label="Tanpa Tag Lokasi" :value="$kpi['untagged'] . ' item'" accent="amber" />
     </div>
 
+    {{-- Materials saved to the catalogue but not yet stocked in any warehouse.
+         These were previously invisible here (only the audit log showed them). --}}
+    @if($stocklessMaterials->isNotEmpty())
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div class="flex items-center gap-2 mb-3">
+                <x-icon name="alert" class="w-4 h-4 text-amber-600" />
+                <h3 class="font-semibold text-amber-800 text-sm">Material Belum Punya Stok di Gudang ({{ $stocklessMaterials->count() }})</h3>
+            </div>
+            <p class="text-xs text-amber-700/80 mb-3">Material berikut sudah tersimpan tapi belum terhubung ke gudang manapun. Tambahkan ke gudang agar muncul di daftar inventaris.</p>
+            <div class="space-y-2">
+                @foreach($stocklessMaterials as $m)
+                    <form method="POST" action="{{ route('inventory.stock') }}" class="flex flex-wrap items-center gap-2 bg-white rounded-lg border border-amber-100 px-3 py-2">
+                        @csrf
+                        <input type="hidden" name="material_id" value="{{ $m->id }}">
+                        <div class="min-w-40 flex-1">
+                            <span class="font-mono text-xs text-slate-400">{{ $m->sku }}</span>
+                            <span class="font-medium text-slate-700 text-sm">{{ $m->name }}</span>
+                            <span class="text-xs text-slate-400">· {{ $m->category }}</span>
+                        </div>
+                        <select name="warehouse_id" required class="text-sm rounded-lg border border-slate-200 px-2 py-1.5">
+                            <option value="">Pilih gudang…</option>
+                            @foreach($warehouses as $w)<option value="{{ $w->id }}">{{ $w->name }}</option>@endforeach
+                        </select>
+                        <input name="quantity" type="number" step="0.01" min="0" value="0" required placeholder="Qty" class="w-24 text-sm rounded-lg border border-slate-200 px-2 py-1.5">
+                        <input name="location_tag" placeholder="Rak (opsional)" class="w-28 text-sm rounded-lg border border-slate-200 px-2 py-1.5">
+                        <button class="bg-amber-500 text-slate-900 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-400">Simpan ke Gudang</button>
+                    </form>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <x-card>
         {{-- Filters --}}
         <form method="GET" class="flex flex-wrap items-center gap-2 mb-4">

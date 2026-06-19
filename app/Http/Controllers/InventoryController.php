@@ -45,6 +45,19 @@ class InventoryController extends Controller
 
         $stocks = $query->orderBy('warehouse_id')->paginate(12)->withQueryString();
 
+        // Materials that exist in the catalogue but are not yet stocked in any
+        // warehouse. Without this they would be saved (and audit-logged) yet
+        // never appear on the inventory page — surfacing them here lets the user
+        // assign them to a gudang. Respects the text/category filters.
+        $stocklessQuery = Material::doesntHave('stocks');
+        if ($search) {
+            $stocklessQuery->where(fn ($m) => $m->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%"));
+        }
+        if ($cat) {
+            $stocklessQuery->where('category', $cat);
+        }
+        $stocklessMaterials = $stocklessQuery->orderBy('name')->get();
+
         // KPI aggregates across all stock
         $all = WarehouseStock::with('material')->get();
         $byCategory = $all->groupBy(fn ($s) => $s->material->category)
@@ -52,6 +65,7 @@ class InventoryController extends Controller
 
         return view('inventory.index', [
             'stocks' => $stocks,
+            'stocklessMaterials' => $stocklessMaterials,
             'statusFilter' => $status,
             'warehouses' => Warehouse::orderBy('name')->get(),
             'projects' => Project::orderBy('name')->get(),
@@ -90,16 +104,50 @@ class InventoryController extends Controller
             'min_stock' => $data['min_stock'],
         ]);
 
-        if (! empty($data['warehouse_id']) && ! empty($data['quantity'])) {
+        // When a warehouse is chosen, always create the stock row (qty may be 0)
+        // so the material is immediately linked to a gudang and visible.
+        if (! empty($data['warehouse_id'])) {
             WarehouseStock::create([
                 'warehouse_id' => $data['warehouse_id'],
                 'material_id' => $material->id,
-                'quantity' => $data['quantity'],
+                'quantity' => $data['quantity'] ?? 0,
                 'location_tag' => $data['location_tag'] ?? null,
             ]);
+
+            return redirect()->route('inventory.index')->with('success', "Material {$material->sku} berhasil ditambahkan & disimpan ke gudang.");
         }
 
-        return redirect()->route('inventory.index')->with('success', "Material {$material->sku} berhasil ditambahkan.");
+        return redirect()->route('inventory.index')
+            ->with('success', "Material {$material->sku} dibuat. Material belum punya stok — tambahkan ke gudang di bagian \"Material Belum Punya Stok\".");
+    }
+
+    /**
+     * Assign / add stock of an existing material into a warehouse. Used to
+     * stock a freshly-created catalogue material, or to top-up an existing row.
+     */
+    public function addStock(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'material_id' => 'required|exists:materials,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'quantity' => 'required|numeric|min:0',
+            'location_tag' => 'nullable|string|max:50',
+        ]);
+
+        $stock = WarehouseStock::firstOrNew([
+            'warehouse_id' => $data['warehouse_id'],
+            'material_id' => $data['material_id'],
+            'project_id' => null,
+        ]);
+        $stock->quantity = (float) ($stock->quantity ?? 0) + (float) $data['quantity'];
+        if (! empty($data['location_tag'])) {
+            $stock->location_tag = $data['location_tag'];
+        }
+        $stock->save();
+
+        $material = Material::find($data['material_id']);
+
+        return redirect()->route('inventory.index')->with('success', "Stok {$material->sku} berhasil disimpan ke gudang.");
     }
 
     public function tagLocation(Request $request, WarehouseStock $stock): RedirectResponse

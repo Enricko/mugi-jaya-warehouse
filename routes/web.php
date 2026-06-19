@@ -8,6 +8,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\InboundController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ShipmentController;
@@ -32,6 +33,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // ── Notifications (all roles) ──────────────────────────────────
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('notifications.read');
+
     // ── Warehouse & Inventory (Owner + Kepala Gudang) ──────────────
     Route::middleware('role:owner,kepala_gudang')->group(function () {
         Route::get('/gudang', [WarehouseController::class, 'index'])->name('warehouses.index');
@@ -39,6 +45,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/inventaris', [InventoryController::class, 'index'])->name('inventory.index');
         Route::post('/inventaris/material', [InventoryController::class, 'store'])->name('inventory.store');
+        Route::post('/inventaris/stok', [InventoryController::class, 'addStock'])->name('inventory.stock');
         Route::post('/inventaris/{stock}/tag', [InventoryController::class, 'tagLocation'])->name('inventory.tag');
 
         Route::get('/transfer', [TransferController::class, 'index'])->name('transfers.index');

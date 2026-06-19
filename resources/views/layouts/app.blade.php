@@ -23,21 +23,16 @@
                 </div>
 
                 <div class="ml-auto flex items-center gap-3">
-                    <div class="hidden md:flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 w-64 focus-within:ring-2 focus-within:ring-amber-500 focus-within:bg-white transition">
-                        <x-icon name="search" class="w-4 h-4 text-slate-400" />
-                        <input type="text" placeholder="Cari material, proyek, driver…"
-                               class="bg-transparent text-sm outline-none flex-1 placeholder:text-slate-400">
-                    </div>
-
                     @yield('topbar-actions')
 
-                    <button class="relative w-10 h-10 grid place-items-center rounded-lg hover:bg-slate-100 transition text-slate-500">
+                    <a href="{{ route('notifications.index') }}" title="Notifikasi"
+                       class="relative w-10 h-10 grid place-items-center rounded-lg hover:bg-slate-100 transition text-slate-500">
                         <x-icon name="bell" class="w-5 h-5" />
                         @php $unread = auth()->id() ? \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->count() : 0; @endphp
                         @if($unread > 0)
-                            <span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] grid place-items-center">{{ $unread > 9 ? '9+' : $unread }}</span>
+                            <span class="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] grid place-items-center">{{ $unread > 9 ? '9+' : $unread }}</span>
                         @endif
-                    </button>
+                    </a>
                 </div>
             </header>
 
