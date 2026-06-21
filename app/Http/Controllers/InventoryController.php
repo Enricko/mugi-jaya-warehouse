@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Material;
+use App\Models\Notification;
+use App\Models\PoItem;
 use App\Models\Project;
+use App\Models\ShipmentItem;
+use App\Models\Transaction;
+use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use Illuminate\Http\RedirectResponse;
@@ -156,5 +161,101 @@ class InventoryController extends Controller
         $stock->update(['location_tag' => $data['location_tag']]);
 
         return back()->with('success', 'Lokasi rak berhasil ditandai.');
+    }
+
+    /**
+     * Add quantity to an existing stock row (works on project-tagged rows too,
+     * since it binds the specific row rather than the general-stock pool).
+     */
+    public function restock(Request $request, WarehouseStock $stock): RedirectResponse
+    {
+        $data = $request->validate(['quantity' => 'required|numeric|min:0.01']);
+        $stock->quantity = (float) $stock->quantity + (float) $data['quantity'];
+        $stock->save();
+
+        return back()->with('success', "Stok {$stock->material->sku} ditambah {$this->qty($data['quantity'])} {$stock->material->unit}.");
+    }
+
+    /**
+     * Set an exact quantity for a stock row (stock-opname / koreksi). The change
+     * is auto-audited by the Auditable trait; the reason is persisted as a
+     * notification so the "why" survives next to the numeric before/after.
+     */
+    public function adjust(Request $request, WarehouseStock $stock): RedirectResponse
+    {
+        $data = $request->validate([
+            'quantity' => 'required|numeric|min:0',
+            'reason' => 'required|string|min:3|max:300',
+        ]);
+
+        $old = (float) $stock->quantity;
+        $stock->quantity = (float) $data['quantity'];
+        $stock->save();
+
+        foreach (User::whereIn('role', ['owner', 'kepala_gudang'])->pluck('id') as $id) {
+            Notification::create([
+                'user_id' => $id,
+                'title' => 'Koreksi Stok',
+                'message' => "{$stock->material->name} di {$stock->warehouse->name}: {$this->qty($old)} → {$this->qty($data['quantity'])} {$stock->material->unit}. Alasan: {$data['reason']}",
+                'type' => 'warning',
+                'module' => 'Warehouse',
+                'is_read' => false,
+            ]);
+        }
+
+        return back()->with('success', "Stok {$stock->material->sku} dikoreksi menjadi {$this->qty($data['quantity'])} {$stock->material->unit}.");
+    }
+
+    /** Edit a material's catalogue details (affects every stock row of it). */
+    public function updateMaterial(Request $request, Material $material): RedirectResponse
+    {
+        $data = $request->validate([
+            'sku' => 'required|string|max:50|unique:materials,sku,' . $material->id,
+            'name' => 'required|string|max:150',
+            'unit' => 'required|string|max:20',
+            'category' => 'required|string|max:50',
+            'purchase_price' => 'required|numeric|min:0',
+            'min_stock' => 'required|integer|min:0',
+        ]);
+
+        $material->update($data);
+
+        return back()->with('success', "Material {$material->sku} diperbarui.");
+    }
+
+    /** Delete a single stock row — removes the material from that one gudang. */
+    public function destroyStock(WarehouseStock $stock): RedirectResponse
+    {
+        $label = $stock->material->sku;
+        $stock->delete();
+
+        return back()->with('success', "Baris stok {$label} dihapus dari gudang.");
+    }
+
+    /**
+     * Delete a material from the catalogue. Blocked when it is referenced by any
+     * transaction, PO item or shipment item so historical records stay intact;
+     * otherwise it is removed along with its (cascade-deleted) stock rows.
+     */
+    public function destroyMaterial(Material $material): RedirectResponse
+    {
+        $referenced = Transaction::where('material_id', $material->id)->exists()
+            || PoItem::where('material_id', $material->id)->exists()
+            || ShipmentItem::where('material_id', $material->id)->exists();
+
+        if ($referenced) {
+            return back()->with('error', "Material {$material->sku} tidak bisa dihapus — sudah dipakai di transaksi, PO, atau pengiriman.");
+        }
+
+        $sku = $material->sku;
+        $material->delete();
+
+        return back()->with('success', "Material {$sku} dihapus dari katalog.");
+    }
+
+    /** Format a decimal quantity without trailing zeros (e.g. 8.00 → "8"). */
+    private function qty(float|string $v): string
+    {
+        return rtrim(rtrim(number_format((float) $v, 2), '0'), '.');
     }
 }

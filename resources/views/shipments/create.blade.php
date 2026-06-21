@@ -22,7 +22,7 @@
             </div>
             <div>
                 <label class="text-xs text-slate-500">Gudang Asal</label>
-                <select name="warehouse_id" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                <select id="warehouseSelect" name="warehouse_id" required onchange="refreshStock()" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                     <option value="">Pilih gudang…</option>
                     @foreach($warehouses as $w)<option value="{{ $w->id }}">{{ $w->name }}</option>@endforeach
                 </select>
@@ -66,11 +66,30 @@
         const tr = document.createElement('tr');
         tr.className = 'border-b border-slate-50';
         tr.innerHTML = `
-            <td class="py-2 pr-2"><select name="items[${i}][material_id]" required class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm">${opts}</select></td>
-            <td class="pr-2"><input name="items[${i}][quantity]" type="number" step="0.01" min="0.01" required class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"></td>
+            <td class="py-2 pr-2"><select name="items[${i}][material_id]" required onchange="showStock(this)" class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm">${opts}</select></td>
+            <td class="pr-2"><input name="items[${i}][quantity]" type="number" step="0.01" min="0.01" required class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"><div class="stock-hint mt-0.5 text-[11px] text-slate-400"></div></td>
             <td><button type="button" class="text-slate-300 hover:text-red-500" onclick="this.closest('tr').remove()">✕</button></td>`;
         body.appendChild(tr);
+        showStock(tr.querySelector('select'));
     }
+
+    // ── Available-stock hint ──────────────────────────────────────────
+    const stock = @json($stockJson ?? (object) []);
+    const whSelect = document.getElementById('warehouseSelect');
+
+    function showStock(sel) {
+        const hint = sel.closest('tr').querySelector('.stock-hint');
+        const wh = whSelect.value;
+        if (! wh || ! sel.value) { hint.textContent = ''; return; }
+        const qty = stock[`${wh}|${sel.value}`] ?? 0;
+        const unit = (materials.find(m => m.id == sel.value) || {}).unit || '';
+        hint.textContent = `Tersedia: ${qty} ${unit}`.trim();
+        hint.className = 'stock-hint mt-0.5 text-[11px] ' + (qty > 0 ? 'text-slate-400' : 'text-red-500');
+    }
+    function refreshStock() {
+        document.querySelectorAll('#itemsBody select').forEach(showStock);
+    }
+
     addRow();
 </script>
 @endpush

@@ -92,7 +92,7 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">
-                        <th class="py-2">SKU</th><th>Nama Material</th><th>Kategori</th><th>Gudang</th><th>Lokasi Rak</th><th>Proyek</th><th class="text-right">Kuantitas</th><th class="text-right">Nilai</th>
+                        <th class="py-2">SKU</th><th>Nama Material</th><th>Kategori</th><th>Gudang</th><th>Lokasi Rak</th><th>Proyek</th><th class="text-right">Kuantitas</th><th class="text-right">Nilai</th><th class="text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -119,9 +119,38 @@
                             <td class="text-slate-500">{{ $s->project?->name ? \Illuminate\Support\Str::limit($s->project->name, 16) : 'umum' }}</td>
                             <td class="text-right font-semibold {{ $s->isLow() ? 'text-red-600' : 'text-slate-700' }}">{{ $qty($s->quantity) }} {{ $s->material->unit }}</td>
                             <td class="text-right text-slate-600">{{ $rp($s->quantity * $s->material->purchase_price) }}</td>
+                            <td class="text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1">
+                                    <button type="button" title="Tambah stok"
+                                        data-action="{{ route('inventory.restock', $s) }}"
+                                        data-label="{{ $s->material->name }} · {{ \Illuminate\Support\Str::after($s->warehouse->name, '— ') }}"
+                                        onclick="openRestock(this)"
+                                        class="px-1.5 py-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 text-xs font-semibold">+ Stok</button>
+                                    <button type="button" title="Koreksi kuantitas"
+                                        data-action="{{ route('inventory.adjust', $s) }}"
+                                        data-label="{{ $s->material->name }} · {{ \Illuminate\Support\Str::after($s->warehouse->name, '— ') }}"
+                                        data-qty="{{ $s->quantity }}"
+                                        onclick="openAdjust(this)"
+                                        class="px-1.5 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs">Koreksi</button>
+                                    <button type="button" title="Edit material"
+                                        data-action="{{ route('inventory.material.update', $s->material) }}"
+                                        data-delete="{{ route('inventory.material.destroy', $s->material) }}"
+                                        data-sku="{{ $s->material->sku }}" data-name="{{ $s->material->name }}"
+                                        data-unit="{{ $s->material->unit }}" data-category="{{ $s->material->category }}"
+                                        data-price="{{ $s->material->purchase_price }}" data-min="{{ $s->material->min_stock }}"
+                                        onclick="openEdit(this)"
+                                        class="px-1.5 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs">Edit</button>
+                                    <form method="POST" action="{{ route('inventory.destroy', $s) }}" class="inline"
+                                          onsubmit="return confirm('Hapus baris stok ini dari gudang?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" title="Hapus baris stok"
+                                            class="px-1.5 py-1 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600 text-xs">✕</button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="py-8 text-center text-slate-400">Tidak ada material yang cocok dengan filter.</td></tr>
+                        <tr><td colspan="9" class="py-8 text-center text-slate-400">Tidak ada material yang cocok dengan filter.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -159,4 +188,106 @@
         </form>
     </div>
 </div>
+
+{{-- Restock modal (add quantity to an existing row) --}}
+<div id="restockModal" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-sm p-6">
+        <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-slate-800">Tambah Stok</h3>
+            <button onclick="closeModal('restockModal')" class="text-slate-400"><x-icon name="x" class="w-5 h-5" /></button>
+        </div>
+        <p id="restockLabel" class="text-xs text-slate-500 mb-4"></p>
+        <form id="restockForm" method="POST">
+            @csrf
+            <label class="text-xs text-slate-500">Jumlah ditambah</label>
+            <input name="quantity" type="number" step="0.01" min="0.01" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-4">
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeModal('restockModal')" class="px-4 py-2 text-sm rounded-lg bg-slate-100">Batal</button>
+                <button class="px-4 py-2 text-sm rounded-lg bg-amber-500 text-slate-900 font-semibold">Tambah</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Adjust modal (set exact quantity with a reason) --}}
+<div id="adjustModal" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-sm p-6">
+        <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-slate-800">Koreksi Kuantitas</h3>
+            <button onclick="closeModal('adjustModal')" class="text-slate-400"><x-icon name="x" class="w-5 h-5" /></button>
+        </div>
+        <p id="adjustLabel" class="text-xs text-slate-500 mb-4"></p>
+        <form id="adjustForm" method="POST">
+            @csrf
+            <label class="text-xs text-slate-500">Kuantitas sebenarnya</label>
+            <input name="quantity" type="number" step="0.01" min="0" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-3">
+            <label class="text-xs text-slate-500">Alasan koreksi</label>
+            <input name="reason" required minlength="3" maxlength="300" placeholder="mis. selisih stok opname" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-4">
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeModal('adjustModal')" class="px-4 py-2 text-sm rounded-lg bg-slate-100">Batal</button>
+                <button class="px-4 py-2 text-sm rounded-lg bg-slate-900 text-white font-semibold">Simpan Koreksi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Edit material modal (+ delete material) --}}
+<div id="editModal" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-slate-800">Edit Material</h3>
+            <button onclick="closeModal('editModal')" class="text-slate-400"><x-icon name="x" class="w-5 h-5" /></button>
+        </div>
+        <form id="editForm" method="POST" class="grid grid-cols-2 gap-3">
+            @csrf @method('PATCH')
+            <div><label class="text-xs text-slate-500">SKU</label><input name="sku" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+            <div><label class="text-xs text-slate-500">Nama</label><input name="name" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+            <div><label class="text-xs text-slate-500">Satuan</label><input name="unit" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+            <div><label class="text-xs text-slate-500">Kategori</label>
+                <select name="category" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"><option>Aluminium</option><option>Kaca</option><option>Aksesori</option></select>
+            </div>
+            <div><label class="text-xs text-slate-500">Harga Beli</label><input name="purchase_price" type="number" min="0" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+            <div><label class="text-xs text-slate-500">Min Stok</label><input name="min_stock" type="number" min="0" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></div>
+            <div class="col-span-2 flex justify-between items-center mt-2">
+                <button type="button" onclick="document.getElementById('delMaterialForm').requestSubmit()" class="px-3 py-2 text-sm rounded-lg text-red-600 hover:bg-red-50">Hapus Material</button>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeModal('editModal')" class="px-4 py-2 text-sm rounded-lg bg-slate-100">Batal</button>
+                    <button class="px-4 py-2 text-sm rounded-lg bg-slate-900 text-white font-semibold">Simpan</button>
+                </div>
+            </div>
+        </form>
+        <form id="delMaterialForm" method="POST" class="hidden" onsubmit="return confirm('Hapus material ini dari katalog? Semua baris stoknya ikut terhapus.')">
+            @csrf @method('DELETE')
+        </form>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    function openRestock(b) {
+        const f = document.getElementById('restockForm');
+        f.reset(); f.action = b.dataset.action;
+        document.getElementById('restockLabel').textContent = b.dataset.label;
+        document.getElementById('restockModal').classList.remove('hidden');
+        f.elements['quantity'].focus();
+    }
+    function openAdjust(b) {
+        const f = document.getElementById('adjustForm');
+        f.reset(); f.action = b.dataset.action;
+        document.getElementById('adjustLabel').textContent = b.dataset.label;
+        f.elements['quantity'].value = b.dataset.qty;
+        document.getElementById('adjustModal').classList.remove('hidden');
+    }
+    function openEdit(b) {
+        const f = document.getElementById('editForm'), e = f.elements;
+        f.action = b.dataset.action;
+        e['sku'].value = b.dataset.sku; e['name'].value = b.dataset.name;
+        e['unit'].value = b.dataset.unit; e['category'].value = b.dataset.category;
+        e['purchase_price'].value = b.dataset.price; e['min_stock'].value = b.dataset.min;
+        document.getElementById('delMaterialForm').action = b.dataset.delete;
+        document.getElementById('editModal').classList.remove('hidden');
+    }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+</script>
+@endpush

@@ -47,6 +47,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/inventaris/material', [InventoryController::class, 'store'])->name('inventory.store');
         Route::post('/inventaris/stok', [InventoryController::class, 'addStock'])->name('inventory.stock');
         Route::post('/inventaris/{stock}/tag', [InventoryController::class, 'tagLocation'])->name('inventory.tag');
+        Route::post('/inventaris/{stock}/restock', [InventoryController::class, 'restock'])->name('inventory.restock');
+        Route::post('/inventaris/{stock}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+        Route::delete('/inventaris/{stock}', [InventoryController::class, 'destroyStock'])->name('inventory.destroy');
+        Route::patch('/inventaris/material/{material}', [InventoryController::class, 'updateMaterial'])->name('inventory.material.update');
+        Route::delete('/inventaris/material/{material}', [InventoryController::class, 'destroyMaterial'])->name('inventory.material.destroy');
 
         Route::get('/transfer', [TransferController::class, 'index'])->name('transfers.index');
         Route::post('/transfer/{transaction}/approve', [TransferController::class, 'approve'])->name('transfers.approve');
