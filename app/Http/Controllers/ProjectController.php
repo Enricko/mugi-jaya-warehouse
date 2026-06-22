@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Transaction;
 use App\Models\WarehouseStock;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
@@ -14,6 +16,22 @@ class ProjectController extends Controller
         $projects = Project::withCount('shipments')->orderByraw("FIELD(status,'active','planning','on_hold','completed')")->get();
 
         return view('projects.index', compact('projects'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:150',
+            'client_name' => 'nullable|string|max:150',
+            'location' => 'nullable|string|max:200',
+            'status' => 'required|in:planning,active,on_hold,completed',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $project = Project::create($data);
+
+        return redirect()->route('projects.show', $project)->with('success', "Proyek {$project->name} berhasil dibuat.");
     }
 
     public function show(Project $project): View

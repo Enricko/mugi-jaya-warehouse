@@ -52,6 +52,7 @@
             <dl class="space-y-2 text-sm">
                 <div class="flex justify-between"><dt class="text-slate-400">Dibuat oleh</dt><dd class="text-slate-700">{{ $po->creator->full_name }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-400">Tanggal dibuat</dt><dd class="text-slate-700">{{ $po->created_at->format('d M Y') }}</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-400">Gudang Tujuan</dt><dd class="text-slate-700">{{ $po->warehouse?->name ?? '—' }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-400">Dibutuhkan</dt><dd class="text-slate-700">{{ $po->needed_date?->format('d M Y') ?? '—' }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-400">Approver</dt><dd class="text-slate-700">{{ $po->approver?->full_name ?? '—' }}</dd></div>
             </dl>

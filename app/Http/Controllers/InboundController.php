@@ -43,6 +43,7 @@ class InboundController extends Controller
         return view('inbound.create', [
             'pos' => $pos,
             'poItems' => $poItems,
+            'poWarehouse' => $pos->pluck('warehouse_id', 'id'),
             'warehouses' => Warehouse::orderBy('name')->get(),
             'materials' => $materials,
             'materialsJson' => $materials->map(fn ($m) => [

@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
     // ── Warehouse & Inventory (Owner + Kepala Gudang) ──────────────
     Route::middleware('role:owner,kepala_gudang')->group(function () {
         Route::get('/gudang', [WarehouseController::class, 'index'])->name('warehouses.index');
+        Route::post('/gudang', [WarehouseController::class, 'store'])->name('warehouses.store');
         Route::get('/gudang/{warehouse}', [WarehouseController::class, 'show'])->name('warehouses.show');
 
         Route::get('/inventaris', [InventoryController::class, 'index'])->name('inventory.index');
@@ -74,6 +75,7 @@ Route::middleware('auth')->group(function () {
     // ── Projects & Shipments (Owner + Kepala Gudang) ───────────────
     Route::middleware('role:owner,kepala_gudang')->group(function () {
         Route::get('/proyek', [ProjectController::class, 'index'])->name('projects.index');
+        Route::post('/proyek', [ProjectController::class, 'store'])->name('projects.store');
         Route::get('/proyek/{project}', [ProjectController::class, 'show'])->name('projects.show');
 
         Route::get('/pengiriman', [ShipmentController::class, 'index'])->name('shipments.index');

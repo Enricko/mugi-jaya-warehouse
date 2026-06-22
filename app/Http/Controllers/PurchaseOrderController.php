@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -31,6 +32,7 @@ class PurchaseOrderController extends Controller
     {
         return view('purchase-orders.create', [
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(),
+            'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
             'materials' => Material::orderBy('name')->get(),
             'materialsJson' => Material::orderBy('name')->get()->map(fn ($m) => [
                 'id' => $m->id, 'name' => $m->name, 'sku' => $m->sku, 'unit' => $m->unit, 'price' => (float) $m->purchase_price,
@@ -42,6 +44,7 @@ class PurchaseOrderController extends Controller
     {
         $data = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'needed_date' => 'nullable|date',
             'submit' => 'nullable|in:draft,pending',
             'items' => 'required|array|min:1',
@@ -56,6 +59,7 @@ class PurchaseOrderController extends Controller
         $po = PurchaseOrder::create([
             'po_number' => 'PO-' . now()->year . '-' . str_pad((string) (PurchaseOrder::count() + 151), 4, '0', STR_PAD_LEFT),
             'supplier_id' => $data['supplier_id'],
+            'warehouse_id' => $data['warehouse_id'] ?? null,
             'created_by' => $request->user()->id,
             'status' => $status,
             'total_estimated' => $total,
@@ -86,7 +90,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder): View
     {
-        $purchaseOrder->load(['supplier', 'creator', 'approver', 'items.material']);
+        $purchaseOrder->load(['supplier', 'warehouse', 'creator', 'approver', 'items.material']);
 
         return view('purchase-orders.show', ['po' => $purchaseOrder]);
     }
@@ -126,7 +130,7 @@ class PurchaseOrderController extends Controller
     /** Print-friendly PO document (print to PDF from the browser). */
     public function document(PurchaseOrder $purchaseOrder): View
     {
-        $purchaseOrder->load(['supplier', 'creator', 'approver', 'items.material']);
+        $purchaseOrder->load(['supplier', 'warehouse', 'creator', 'approver', 'items.material']);
 
         return view('purchase-orders.document', ['po' => $purchaseOrder]);
     }

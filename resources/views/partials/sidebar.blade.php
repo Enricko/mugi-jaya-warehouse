@@ -8,7 +8,7 @@
         ['Notifikasi',     'bell',      'notifications.index',  ['owner', 'kepala_gudang', 'mandor', 'driver', 'engineering']],
         ['Gudang',         'warehouse', 'warehouses.index',     ['owner', 'kepala_gudang']],
         ['Inventaris',     'inventory', 'inventory.index',      ['owner', 'kepala_gudang']],
-        ['Barang Masuk',   'inbound',   'inbound.index',        ['kepala_gudang', 'mandor']],
+        ['Barang Masuk',   'inbound',   'inbound.index',        ['owner', 'kepala_gudang', 'mandor']],
         ['Transfer',       'transfer',  'transfers.index',      ['kepala_gudang']],
         ['Proyek',         'project',   'projects.index',       ['owner', 'kepala_gudang']],
         ['Pengiriman',     'shipment',  'shipments.index',      ['owner', 'kepala_gudang']],

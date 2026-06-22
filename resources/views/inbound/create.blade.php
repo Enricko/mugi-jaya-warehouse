@@ -21,7 +21,7 @@
                 </div>
                 <div>
                     <label class="text-xs text-slate-500">Gudang Tujuan</label>
-                    <select name="warehouse_id" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                    <select name="warehouse_id" id="warehouseSelect" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                         <option value="">Pilih gudang…</option>
                         @foreach($warehouses as $w)<option value="{{ $w->id }}">{{ $w->name }}</option>@endforeach
                     </select>
@@ -70,6 +70,7 @@
 <script>
     const materials = @json($materialsJson);
     const poItems = @json($poItems);
+    const poWarehouse = @json($poWarehouse);
     let idx = 0;
     const body = document.getElementById('itemsBody');
 
@@ -97,6 +98,9 @@
         } else {
             addRow();
         }
+        // Pre-fill the destination warehouse declared on the PO, if any.
+        const wh = poWarehouse[this.value];
+        if (wh) document.getElementById('warehouseSelect').value = wh;
     });
 
     addRow();

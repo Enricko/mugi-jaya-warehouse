@@ -19,8 +19,15 @@
                 </select>
             </div>
             <div>
+                <label class="text-xs text-slate-500">Gudang Tujuan</label>
+                <select name="warehouse_id" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                    <option value="">— Tentukan saat barang masuk —</option>
+                    @foreach($warehouses as $w)<option value="{{ $w->id }}" @selected(old('warehouse_id')===$w->id)>{{ $w->name }}</option>@endforeach
+                </select>
+            </div>
+            <div>
                 <label class="text-xs text-slate-500">Tanggal Dibutuhkan</label>
-                <input type="date" name="needed_date" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                <input type="date" name="needed_date" value="{{ old('needed_date') }}" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
             </div>
         </div>
     </x-card>
