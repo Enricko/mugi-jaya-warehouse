@@ -13,15 +13,29 @@ use Illuminate\View\View;
 
 class ReportController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        return view('reports.index', $this->datasets());
+        $filters = [
+            'date_from' => $request->get('date_from'),
+            'date_to' => $request->get('date_to'),
+            'warehouse' => $request->get('warehouse'),
+        ];
+
+        return view('reports.index', array_merge($this->datasets($filters), [
+            'warehouses' => Warehouse::orderBy('name')->get(),
+            'filters' => $filters,
+        ]));
     }
 
     public function export(Request $request)
     {
         $type = $request->get('type', 'stock');
-        $data = $this->datasets();
+        $filters = [
+            'date_from' => $request->get('date_from'),
+            'date_to' => $request->get('date_to'),
+            'warehouse' => $request->get('warehouse'),
+        ];
+        $data = $this->datasets($filters);
 
         [$filename, $headers, $rows] = match ($type) {
             'consumption' => ['konsumsi-material', ['Material', 'SKU', 'Total Qty', 'Nilai'],
@@ -44,30 +58,54 @@ class ReportController extends Controller
         }, "laporan-{$filename}-" . now()->format('Ymd') . '.csv', ['Content-Type' => 'text/csv']);
     }
 
-    private function datasets(): array
+    private function datasets(array $filters = []): array
     {
-        $stocks = WarehouseStock::with(['material', 'warehouse'])->get();
+        $stocksQuery = WarehouseStock::with(['material', 'warehouse']);
+        if (! empty($filters['warehouse'])) {
+            $stocksQuery->where('warehouse_id', $filters['warehouse']);
+        }
+        $stocks = $stocksQuery->get();
 
-        $stock = Warehouse::orderBy('name')->get()->map(function ($w) use ($stocks) {
-            $rows = $stocks->where('warehouse_id', $w->id);
+        $warehouseFilter = ! empty($filters['warehouse']) ? $filters['warehouse'] : null;
 
-            return [
-                'name' => $w->name,
-                'items' => $rows->count(),
-                'qty' => (float) $rows->sum('quantity'),
-                'value' => $rows->sum(fn ($s) => (float) $s->quantity * (float) ($s->material->purchase_price ?? 0)),
-            ];
-        });
+        $stock = Warehouse::orderBy('name')
+            ->when($warehouseFilter, fn ($q) => $q->where('id', $warehouseFilter))
+            ->get()
+            ->map(function ($w) use ($stocks) {
+                $rows = $stocks->where('warehouse_id', $w->id);
 
-        $consumption = Transaction::with('material')->where('type', 'consumption')->get()
+                return [
+                    'name' => $w->name,
+                    'items' => $rows->count(),
+                    'qty' => (float) $rows->sum('quantity'),
+                    'value' => $rows->sum(fn ($s) => (float) $s->quantity * (float) ($s->material->purchase_price ?? 0)),
+                ];
+            });
+
+        $consumptionQuery = Transaction::with('material')->where('type', 'consumption');
+        if (! empty($filters['date_from'])) {
+            $consumptionQuery->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $consumptionQuery->whereDate('created_at', '<=', $filters['date_to']);
+        }
+        $consumption = $consumptionQuery->get()
             ->groupBy('material_id')->map(function ($g) {
                 $m = $g->first()->material;
 
                 return ['name' => $m?->name ?? '—', 'sku' => $m?->sku ?? '—', 'qty' => (float) $g->sum('quantity'), 'value' => (float) $g->sum('amount')];
             })->values();
 
-        $drivers = User::where('role', 'driver')->get()->map(function ($d) {
-            $ships = Shipment::where('driver_id', $d->id)->get();
+        $shipmentQuery = Shipment::query();
+        if (! empty($filters['date_from'])) {
+            $shipmentQuery->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $shipmentQuery->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $drivers = User::where('role', 'driver')->get()->map(function ($d) use ($shipmentQuery) {
+            $ships = (clone $shipmentQuery)->where('driver_id', $d->id)->get();
 
             return ['name' => $d->full_name, 'total' => $ships->count(),
                 'delivered' => $ships->where('status', 'delivered')->count(),

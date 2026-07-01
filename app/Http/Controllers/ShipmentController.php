@@ -20,14 +20,39 @@ class ShipmentController extends Controller
     public function index(Request $request): View
     {
         $query = Shipment::with(['driver', 'project', 'warehouse']);
+
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('vehicle_plate', 'like', "%{$search}%");
+            });
+        }
         if ($status = $request->get('status')) {
             $query->where('status', $status);
+        }
+        if ($project = $request->get('project')) {
+            $query->where('project_id', $project);
+        }
+        if ($warehouse = $request->get('warehouse')) {
+            $query->where('warehouse_id', $warehouse);
+        }
+        if ($driver = $request->get('driver')) {
+            $query->where('driver_id', $driver);
+        }
+        if ($dateFrom = $request->get('date_from')) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo = $request->get('date_to')) {
+            $query->whereDate('created_at', '<=', $dateTo);
         }
 
         return view('shipments.index', [
             'shipments' => $query->latest()->paginate(15)->withQueryString(),
             'statusFilter' => $status ?? null,
             'counts' => Shipment::selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status'),
+            'projects' => Project::orderBy('name')->get(),
+            'warehouses' => Warehouse::orderBy('name')->get(),
+            'drivers' => User::where('role', 'driver')->orderBy('full_name')->get(),
         ]);
     }
 

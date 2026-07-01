@@ -17,14 +17,28 @@ class PurchaseOrderController extends Controller
     public function index(Request $request): View
     {
         $query = PurchaseOrder::with(['supplier', 'creator', 'approver'])->withCount('items');
+
+        if ($search = $request->get('search')) {
+            $query->where('po_number', 'like', "%{$search}%");
+        }
         if ($status = $request->get('status')) {
             $query->where('status', $status);
+        }
+        if ($supplier = $request->get('supplier')) {
+            $query->where('supplier_id', $supplier);
+        }
+        if ($dateFrom = $request->get('date_from')) {
+            $query->whereDate('needed_date', '>=', $dateFrom);
+        }
+        if ($dateTo = $request->get('date_to')) {
+            $query->whereDate('needed_date', '<=', $dateTo);
         }
 
         return view('purchase-orders.index', [
             'orders' => $query->latest()->paginate(15)->withQueryString(),
             'statusFilter' => $status ?? null,
             'counts' => PurchaseOrder::selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status'),
+            'suppliers' => Supplier::orderBy('name')->get(),
         ]);
     }
 

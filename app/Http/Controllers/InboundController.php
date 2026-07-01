@@ -16,12 +16,30 @@ use Illuminate\View\View;
 
 class InboundController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $inbounds = Transaction::with(['creator', 'material', 'toWarehouse'])
-            ->where('type', 'inbound')->latest()->paginate(15);
+        $query = Transaction::with(['creator', 'material', 'toWarehouse'])
+            ->where('type', 'inbound');
 
-        return view('inbound.index', compact('inbounds'));
+        if ($search = $request->get('search')) {
+            $query->where('code', 'like', "%{$search}%");
+        }
+        if ($warehouse = $request->get('warehouse')) {
+            $query->where('to_warehouse_id', $warehouse);
+        }
+        if ($dateFrom = $request->get('date_from')) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo = $request->get('date_to')) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $inbounds = $query->latest()->paginate(15)->withQueryString();
+
+        return view('inbound.index', [
+            'inbounds' => $inbounds,
+            'warehouses' => Warehouse::orderBy('name')->get(),
+        ]);
     }
 
     public function create(): View

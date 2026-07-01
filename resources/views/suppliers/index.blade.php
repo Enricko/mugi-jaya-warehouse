@@ -12,6 +12,26 @@
 
 @section('content')
 <x-card>
+    <form method="GET" class="flex flex-wrap items-center gap-2 mb-4">
+        <div class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 flex-1 min-w-48">
+            <x-icon name="search" class="w-4 h-4 text-slate-400" />
+            <input name="search" value="{{ request('search') }}" placeholder="Cari nama, kota, kontak…" class="bg-transparent text-sm outline-none flex-1">
+        </div>
+        <select name="active" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+            <option value="">Status: Semua</option>
+            <option value="1" @selected(request('active')==='1')>Aktif</option>
+            <option value="0" @selected(request('active')==='0')>Nonaktif</option>
+        </select>
+        <select name="external" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+            <option value="">Tipe: Semua</option>
+            <option value="1" @selected(request('external')==='1')>Luar Pulau</option>
+            <option value="0" @selected(request('external')==='0')>Dalam Pulau</option>
+        </select>
+        <button class="bg-amber-500 text-slate-900 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-amber-400">Filter</button>
+        @if(request()->hasAny(['search','active','external']))
+            <a href="{{ route('suppliers.index') }}" class="text-xs text-slate-400 hover:text-red-500">✕ Reset</a>
+        @endif
+    </form>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead><tr class="text-left text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">

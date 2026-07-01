@@ -24,6 +24,23 @@
     </div>
 
     <x-card>
+        <form method="GET" class="flex flex-wrap items-center gap-2 mb-4">
+            <div class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 flex-1 min-w-48">
+                <x-icon name="search" class="w-4 h-4 text-slate-400" />
+                <input name="search" value="{{ request('search') }}" placeholder="Cari nomor PO…" class="bg-transparent text-sm outline-none flex-1">
+            </div>
+            <select name="supplier" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+                <option value="">Supplier: Semua</option>
+                @foreach($suppliers as $s)<option value="{{ $s->id }}" @selected(request('supplier')==$s->id)>{{ $s->name }}</option>@endforeach
+            </select>
+            <input type="date" name="date_from" value="{{ request('date_from') }}" class="text-sm rounded-lg border border-slate-200 px-3 py-2" title="Dibutuhkan dari">
+            <input type="date" name="date_to" value="{{ request('date_to') }}" class="text-sm rounded-lg border border-slate-200 px-3 py-2" title="Dibutuhkan sampai">
+            @if($statusFilter)<input type="hidden" name="status" value="{{ $statusFilter }}">@endif
+            <button class="bg-amber-500 text-slate-900 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-amber-400">Filter</button>
+            @if(request()->hasAny(['search','supplier','date_from','date_to']))
+                <a href="{{ route('purchase-orders.index', $statusFilter ? ['status' => $statusFilter] : []) }}" class="text-xs text-slate-400 hover:text-red-500">✕ Reset</a>
+            @endif
+        </form>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead><tr class="text-left text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">

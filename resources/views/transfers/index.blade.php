@@ -60,6 +60,30 @@
     </x-card>
 
     <x-card title="Riwayat Transfer">
+        <form method="GET" class="flex flex-wrap items-center gap-2 mb-4">
+            <div class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 flex-1 min-w-48">
+                <x-icon name="search" class="w-4 h-4 text-slate-400" />
+                <input name="search" value="{{ request('search') }}" placeholder="Cari kode transfer…" class="bg-transparent text-sm outline-none flex-1">
+            </div>
+            <select name="status" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+                <option value="">Status: Semua</option>
+                @foreach(['approved'=>'Approved','rejected'=>'Rejected','completed'=>'Completed'] as $k=>$label)
+                    <option value="{{ $k }}" @selected(request('status')==$k)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <select name="from_warehouse" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+                <option value="">Dari Gudang: Semua</option>
+                @foreach($warehouses as $w)<option value="{{ $w->id }}" @selected(request('from_warehouse')==$w->id)>{{ $w->name }}</option>@endforeach
+            </select>
+            <select name="to_warehouse" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+                <option value="">Ke Gudang: Semua</option>
+                @foreach($warehouses as $w)<option value="{{ $w->id }}" @selected(request('to_warehouse')==$w->id)>{{ $w->name }}</option>@endforeach
+            </select>
+            <button class="bg-amber-500 text-slate-900 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-amber-400">Filter</button>
+            @if(request()->hasAny(['search','status','from_warehouse','to_warehouse']))
+                <a href="{{ route('transfers.index') }}" class="text-xs text-slate-400 hover:text-red-500">✕ Reset</a>
+            @endif
+        </form>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead><tr class="text-left text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">
@@ -82,6 +106,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $history->links() }}</div>
     </x-card>
 </div>
 @endsection

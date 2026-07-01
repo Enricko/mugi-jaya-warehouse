@@ -26,6 +26,32 @@
     </div>
 
     <x-card>
+        <form method="GET" class="flex flex-wrap items-center gap-2 mb-4">
+            <div class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 flex-1 min-w-48">
+                <x-icon name="search" class="w-4 h-4 text-slate-400" />
+                <input name="search" value="{{ request('search') }}" placeholder="Cari kode pengiriman, plat kendaraan…" class="bg-transparent text-sm outline-none flex-1">
+            </div>
+            <select name="project" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+                <option value="">Proyek: Semua</option>
+                @foreach($projects as $p)<option value="{{ $p->id }}" @selected(request('project')==$p->id)>{{ $p->name }}</option>@endforeach
+            </select>
+            <select name="warehouse" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+                <option value="">Gudang: Semua</option>
+                @foreach($warehouses as $w)<option value="{{ $w->id }}" @selected(request('warehouse')==$w->id)>{{ $w->name }}</option>@endforeach
+            </select>
+            <select name="driver" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+                <option value="">Driver: Semua</option>
+                @foreach($drivers as $d)<option value="{{ $d->id }}" @selected(request('driver')==$d->id)>{{ $d->full_name }}</option>@endforeach
+            </select>
+            <input type="date" name="date_from" value="{{ request('date_from') }}" class="text-sm rounded-lg border border-slate-200 px-3 py-2" title="Dari tanggal">
+            <input type="date" name="date_to" value="{{ request('date_to') }}" class="text-sm rounded-lg border border-slate-200 px-3 py-2" title="Sampai tanggal">
+            @if($statusFilter)<input type="hidden" name="status" value="{{ $statusFilter }}">@endif
+            <button class="bg-amber-500 text-slate-900 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-amber-400">Filter</button>
+            @if(request()->hasAny(['search','project','warehouse','driver','date_from','date_to']))
+                <a href="{{ route('shipments.index', $statusFilter ? ['status' => $statusFilter] : []) }}" class="text-xs text-slate-400 hover:text-red-500">✕ Reset</a>
+            @endif
+        </form>
+
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead><tr class="text-left text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">

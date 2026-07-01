@@ -25,7 +25,16 @@
             <option value="">Modul: Semua</option>
             @foreach($modules as $m)<option value="{{ $m }}" @selected($moduleFilter==$m)>{{ $m }}</option>@endforeach
         </select>
+        <select name="user" class="text-sm rounded-lg border border-slate-200 px-3 py-2">
+            <option value="">User: Semua</option>
+            @foreach($users as $u)<option value="{{ $u->id }}" @selected(request('user')==$u->id)>{{ $u->full_name }}</option>@endforeach
+        </select>
+        <input type="date" name="date_from" value="{{ request('date_from') }}" class="text-sm rounded-lg border border-slate-200 px-3 py-2" title="Dari tanggal">
+        <input type="date" name="date_to" value="{{ request('date_to') }}" class="text-sm rounded-lg border border-slate-200 px-3 py-2" title="Sampai tanggal">
         <button class="bg-amber-500 text-slate-900 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-amber-400">Filter</button>
+        @if(request()->hasAny(['action','module','user','date_from','date_to']))
+            <a href="{{ route('audit-log.index') }}" class="text-xs text-slate-400 hover:text-red-500">✕ Reset</a>
+        @endif
         <span class="text-xs text-slate-400 ml-auto">Audit log bersifat immutable — tidak dapat dihapus oleh user.</span>
     </form>
 

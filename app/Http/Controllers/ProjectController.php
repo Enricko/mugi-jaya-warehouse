@@ -11,11 +11,27 @@ use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $projects = Project::withCount('shipments')->orderByraw("FIELD(status,'active','planning','on_hold','completed')")->get();
+        $query = Project::withCount('shipments');
 
-        return view('projects.index', compact('projects'));
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('client_name', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%");
+            });
+        }
+        if ($status = $request->get('status')) {
+            $query->where('status', $status);
+        } else {
+            $query->orderByRaw("CASE status WHEN 'active' THEN 1 WHEN 'planning' THEN 2 WHEN 'on_hold' THEN 3 WHEN 'completed' THEN 4 ELSE 5 END");
+        }
+
+        return view('projects.index', [
+            'projects' => $query->get(),
+            'statusFilter' => $status ?? null,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

@@ -15,13 +15,32 @@ use Illuminate\View\View;
 
 class TransferController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $base = fn () => Transaction::with(['fromWarehouse', 'toWarehouse', 'material', 'creator', 'approver'])->where('type', 'transfer');
+        $pending = Transaction::with(['fromWarehouse', 'toWarehouse', 'material', 'creator', 'approver'])
+            ->where('type', 'transfer')->where('status', 'pending')->latest()->get();
+
+        $historyQuery = Transaction::with(['fromWarehouse', 'toWarehouse', 'material', 'creator', 'approver'])
+            ->where('type', 'transfer')
+            ->whereIn('status', ['approved', 'rejected', 'completed']);
+
+        if ($search = $request->get('search')) {
+            $historyQuery->where('code', 'like', "%{$search}%");
+        }
+        if ($status = $request->get('status')) {
+            $historyQuery->where('status', $status);
+        }
+        if ($fromWh = $request->get('from_warehouse')) {
+            $historyQuery->where('from_warehouse_id', $fromWh);
+        }
+        if ($toWh = $request->get('to_warehouse')) {
+            $historyQuery->where('to_warehouse_id', $toWh);
+        }
 
         return view('transfers.index', [
-            'pending' => $base()->where('status', 'pending')->latest()->get(),
-            'history' => $base()->whereIn('status', ['approved', 'rejected', 'completed'])->latest()->limit(30)->get(),
+            'pending' => $pending,
+            'history' => $historyQuery->latest()->paginate(15)->withQueryString(),
+            'warehouses' => Warehouse::orderBy('name')->get(),
         ]);
     }
 

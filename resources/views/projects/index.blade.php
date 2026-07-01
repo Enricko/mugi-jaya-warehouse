@@ -12,6 +12,18 @@
 
 @section('content')
 @if($errors->any())<div class="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{{ $errors->first() }}</div>@endif
+<div class="space-y-4">
+    <div class="flex flex-wrap items-center gap-2">
+        <form method="GET" class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 flex-1 min-w-48">
+            <x-icon name="search" class="w-4 h-4 text-slate-400" />
+            <input name="search" value="{{ request('search') }}" placeholder="Cari nama proyek, klien, lokasi…" class="bg-transparent text-sm outline-none flex-1">
+            @if($statusFilter)<input type="hidden" name="status" value="{{ $statusFilter }}">@endif
+        </form>
+        <a href="{{ route('projects.index', request('search') ? ['search' => request('search')] : []) }}" @class(['px-3 py-1.5 rounded-lg text-sm font-medium', 'bg-slate-900 text-white' => ! $statusFilter, 'bg-white border border-slate-200 text-slate-600' => $statusFilter])>Semua</a>
+        @foreach(['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold','completed'=>'Completed'] as $k=>$label)
+            <a href="{{ route('projects.index', array_filter(['status'=>$k, 'search'=>request('search')])) }}" @class(['px-3 py-1.5 rounded-lg text-sm font-medium', 'bg-slate-900 text-white' => $statusFilter===$k, 'bg-white border border-slate-200 text-slate-600' => $statusFilter!==$k])>{{ $label }}</a>
+        @endforeach
+    </div>
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
     @forelse($projects as $p)
         <a href="{{ route('projects.show', $p) }}" class="block bg-white rounded-xl border border-slate-200/70 shadow-sm p-5 hover:border-amber-300 hover:shadow-md transition">
@@ -30,6 +42,7 @@
     @empty
         <div class="col-span-full py-12 text-center text-slate-400">Belum ada proyek. Klik “Tambah Proyek” untuk membuat.</div>
     @endforelse
+</div>
 </div>
 
 <div id="addProject" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">

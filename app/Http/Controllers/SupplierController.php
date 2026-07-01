@@ -9,11 +9,27 @@ use Illuminate\View\View;
 
 class SupplierController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $suppliers = Supplier::withCount('purchaseOrders')->orderBy('name')->get();
+        $query = Supplier::withCount('purchaseOrders');
 
-        return view('suppliers.index', compact('suppliers'));
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%")
+                  ->orWhere('contact_phone', 'like', "%{$search}%");
+            });
+        }
+        if (($active = $request->get('active')) !== null && $active !== '') {
+            $query->where('is_active', $active);
+        }
+        if (($external = $request->get('external')) !== null && $external !== '') {
+            $query->where('is_external_island', $external);
+        }
+
+        return view('suppliers.index', [
+            'suppliers' => $query->orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
