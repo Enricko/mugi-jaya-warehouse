@@ -21,6 +21,8 @@ class DashboardController extends Controller
         return match ($user->role) {
             'owner' => $this->owner($user),
             'kepala_gudang' => $this->operational($user),
+            'driver' => $this->driver($user),
+            'mandor' => $this->mandor($user),
             default => view('dashboard.index', ['user' => $user]),
         };
     }
@@ -86,6 +88,63 @@ class DashboardController extends Controller
             'pendingTransfers' => $pendingTransfers,
             'pendingPoCount' => PurchaseOrder::where('status', 'pending')->count(),
             'mandors' => $mandors,
+        ]);
+    }
+
+    /** Driver — specific dashboard for active deliveries. */
+    private function driver(User $user): View
+    {
+        $activeShipments = Shipment::with(['project', 'warehouse', 'items'])
+            ->where('driver_id', $user->id)
+            ->whereIn('status', ['confirmed', 'in_transit', 'problem'])
+            ->latest()
+            ->get();
+            
+        $todayDeliveriesCount = Shipment::where('driver_id', $user->id)
+            ->whereDate('delivered_at', today())
+            ->where('status', 'delivered')
+            ->count();
+            
+        return view('dashboard.driver', [
+            'user' => $user,
+            'activeShipments' => $activeShipments,
+            'todayDeliveriesCount' => $todayDeliveriesCount,
+        ]);
+    }
+    
+    /** Mandor — specific dashboard for managed warehouse. */
+    private function mandor(User $user): View
+    {
+        $warehouse = clone $user->managedWarehouse;
+        $inboundPending = collect();
+        $inboundRecent = collect();
+        $criticalCount = 0;
+        
+        if ($warehouse) {
+            $inboundPending = Transaction::with(['material', 'creator'])
+                ->where('to_warehouse_id', $warehouse->id)
+                ->where('type', 'inbound')
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+                
+            $inboundRecent = Transaction::with(['material', 'creator'])
+                ->where('to_warehouse_id', $warehouse->id)
+                ->where('type', 'inbound')
+                ->whereIn('status', ['completed', 'approved'])
+                ->latest()
+                ->limit(5)
+                ->get();
+                
+            $criticalCount = WarehouseStock::where('warehouse_id', $warehouse->id)->get()->filter->isLow()->count();
+        }
+        
+        return view('dashboard.mandor', [
+            'user' => $user,
+            'warehouse' => $warehouse,
+            'inboundPending' => $inboundPending,
+            'inboundRecent' => $inboundRecent,
+            'criticalCount' => $criticalCount,
         ]);
     }
 

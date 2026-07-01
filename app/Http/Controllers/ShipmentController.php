@@ -164,8 +164,15 @@ class ShipmentController extends Controller
         return rtrim(rtrim(number_format($v, 2), '0'), '.');
     }
 
-    public function show(Shipment $shipment): View
+    public function show(Request $request, Shipment $shipment): View
     {
+        $user = $request->user();
+
+        // Driver can only view shipments assigned to them
+        if ($user->isDriver() && $shipment->driver_id !== $user->id) {
+            abort(403);
+        }
+
         $shipment->load(['driver', 'project', 'warehouse', 'items.material']);
 
         return view('shipments.show', compact('shipment'));
@@ -173,6 +180,13 @@ class ShipmentController extends Controller
 
     public function updateStatus(Request $request, Shipment $shipment): RedirectResponse
     {
+        $user = $request->user();
+
+        // Driver can only update status of shipments assigned to them
+        if ($user->isDriver() && $shipment->driver_id !== $user->id) {
+            abort(403);
+        }
+
         $data = $request->validate([
             'status' => 'required|in:confirmed,in_transit,delivered,problem',
         ]);

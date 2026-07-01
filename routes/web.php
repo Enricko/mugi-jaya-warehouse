@@ -81,6 +81,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/pengiriman', [ShipmentController::class, 'index'])->name('shipments.index');
         Route::get('/pengiriman/baru', [ShipmentController::class, 'create'])->name('shipments.create');
         Route::post('/pengiriman', [ShipmentController::class, 'store'])->name('shipments.store');
+    });
+
+    // ── Shipment detail & status (Owner + Kepala Gudang + Driver) ─
+    Route::middleware('role:owner,kepala_gudang,driver')->group(function () {
         Route::get('/pengiriman/{shipment}', [ShipmentController::class, 'show'])->name('shipments.show');
         Route::post('/pengiriman/{shipment}/status', [ShipmentController::class, 'updateStatus'])->name('shipments.status');
     });
